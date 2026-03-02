@@ -5,6 +5,7 @@ import os
 def save_outputs(results):
     """
     Standardizes generic Col 1, Col 2 keys using the AI-provided header_map.
+    Saves to /tmp/ for Vercel compatibility.
     """
     all_data = []
     final_header_map = {}
@@ -13,7 +14,6 @@ def save_outputs(results):
         if not section or not isinstance(section, dict):
             continue
             
-   
         section_headers = section.get("header_map", {})
         final_header_map.update(section_headers)
         
@@ -26,19 +26,25 @@ def save_outputs(results):
         print("No data extracted.")
         return
 
+
+    json_path = "/tmp/output.json"
+    xlsx_path = "/tmp/output.xlsx"
+
     # 1. Save JSON
-    with open("output.json", "w", encoding="utf-8") as f:
+    with open(json_path, "w", encoding="utf-8") as f:
         json.dump(all_data, f, ensure_ascii=False, indent=4)
 
     # 2. Save Excel
     try:
         df = pd.DataFrame(all_data)
         
-        # Rename "Col 1" -> "Original Name" using the header_map
+     
         if final_header_map:
-            df.rename(columns=final_header_map, inplace=True)
+         
+            existing_map = {k: v for k, v in final_header_map.items() if k in df.columns}
+            df.rename(columns=existing_map, inplace=True)
             
-        df.to_excel("output.xlsx", index=False)
-        print(f"Successfully saved {len(all_data)} rows with dynamic headers.")
+        df.to_excel(xlsx_path, index=False)
+        print(f"Successfully saved to {xlsx_path} with {len(all_data)} rows.")
     except Exception as e:
         print(f"Excel Error: {e}")
